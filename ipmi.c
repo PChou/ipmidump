@@ -48,6 +48,7 @@ struct ipmi_payload_header {
 
 
 extern void print_ipmi_session(enum ipmi_direction direction,u_char cmd, const u_char *payload, int payload_len, enum dump_level dl);
+extern void print_ipmi_sdr(enum ipmi_direction direction,u_char cmd, const u_char *payload, int payload_len, enum dump_level dl);
 
 const char* ipmi_get_auth_type_str(u_char auth_type) {
     switch ( auth_type ) {
@@ -117,6 +118,12 @@ const char* ipmi_get_cmd_str(u_char nf, u_char cmd){
     else if ( nf == NETFN_STOR && cmd == GET_SDR ) {
         return "Get SDR";
     } 
+    else if ( nf == NETFN_SEVT && cmd == GET_SENSOR_READING ) {
+        return "Get Sensor Reading";
+    } 
+    else if ( nf == NETFN_SEVT && cmd == GET_SENSOR_THRESHOLD ) {
+        return "Get Sensor Threshold";
+    } 
     else {
         return "TODO";
     }
@@ -136,6 +143,7 @@ void print_ipmi(const u_char *payload, int payload_len, enum dump_level dl){
     const u_char *ipmi_payload_body, *ipb;
     int actual_header_len = sizeof(struct ipmi_session_header);
     int msg_len = 0;
+    int i;
     u_char network_fn = 0;
     enum ipmi_direction direction;
 
@@ -155,11 +163,11 @@ void print_ipmi(const u_char *payload, int payload_len, enum dump_level dl){
 
     if ( dl <= DL_IPMI_HEADER ) {
         printf("  [IPMI] Auth Type: %s(0x%02x)\n", ipmi_get_auth_type_str(ish->ish_auth_type), ish->ish_auth_type);
-        printf("  [IPMI] Sequence: %d\n", ish->ish_sn);
-        printf("  [IPMI] Session: %d\n", ish->ish_id);
+        printf("  [IPMI] Sequence: %u\n", ish->ish_sn);
+        printf("  [IPMI] Session: %u\n", ish->ish_id);
         if ( ish->ish_auth_type != IPMI_AUTH_TYPE_NONE ) {
             printf("  [IPMI] Auth Code(16 bytes):");
-            for ( int i = 0 ; i < IPMI_AUTH_CODE_LEN; i++ ) {
+            for (  i = 0 ; i < IPMI_AUTH_CODE_LEN; i++ ) {
                 printf(" 0x%02x", ish->ish_auth_code[i]);
             }
             printf("\n");
@@ -208,6 +216,19 @@ void print_ipmi(const u_char *payload, int payload_len, enum dump_level dl){
                 iph->ipd_cmd == CLOSE_SESSION
                 )  ) {
         print_ipmi_session(direction ,iph->ipd_cmd , ipb ,msg_len-sizeof(struct ipmi_payload_header)+1  , dl);
+    }
+    else if ( network_fn == NETFN_STOR && (
+                iph->ipd_cmd == GET_SDR_REPINFO ||
+                iph->ipd_cmd == RESERVE_SDR_REP ||
+                iph->ipd_cmd == GET_SDR 
+                ) ){
+        print_ipmi_sdr(direction, iph->ipd_cmd, ipb, msg_len-sizeof(struct ipmi_payload_header)+1, dl);
+    }
+    else if ( network_fn == NETFN_SEVT && (
+                iph->ipd_cmd == GET_SENSOR_READING ||
+                iph->ipd_cmd == GET_SENSOR_THRESHOLD 
+                ) ){
+        print_ipmi_sdr(direction, iph->ipd_cmd, ipb, msg_len-sizeof(struct ipmi_payload_header)+1, dl);
     }
     else {
     }

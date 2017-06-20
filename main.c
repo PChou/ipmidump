@@ -228,13 +228,17 @@ int main(int argc, char *argv[]) {
     memset(dev,0, sizeof(dev));
     memset(filter,0, sizeof(filter));
 
-    while( (ch = getopt(argc, argv, "e:i::") ) != -1) {
+    while( (ch = getopt(argc, argv, "e:i:") ) != -1) {
         switch( ch ){
             case 'i':
-                strcpy(dev, optarg);
+                if ( optarg != NULL ){
+                    strcpy(dev, optarg);
+                }
                 break;
             case 'e':
-                strcpy(filter, optarg);
+                if ( optarg != NULL ){
+                    strcpy(filter, optarg);
+                }
                 break;
             case '?':
                 invalid=1;

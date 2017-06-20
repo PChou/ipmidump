@@ -177,11 +177,12 @@ void print_ipmi_session(enum ipmi_direction direction,u_char cmd, const u_char *
             printf("  [IPMI] Username: %s\n", request->name);
         }
         else {
+            int i;
             struct ipmi_get_sess_chal_response *response = (struct ipmi_get_sess_chal_response *) payload;
             printf("  [IPMI] Completion Code: 0x%02x\n", response->cc);
             printf("  [IPMI] Temporary Session ID: %d\n", response->sid);
             printf("  [IPMI] Challege string data: ");
-            for ( int i = 0 ; i < sizeof(response->chal_str); i++ ) {
+            for (  i = 0 ; i < sizeof(response->chal_str); i++ ) {
                 printf(" 0x%02x", response->chal_str[i]);
             }
             printf("\n");
@@ -189,11 +190,12 @@ void print_ipmi_session(enum ipmi_direction direction,u_char cmd, const u_char *
     }
     else if ( cmd ==  ACT_SESSION ) {
         if ( direction == IPMI_REQUEST ){
+            int i;
             struct ipmi_act_sess_request *request = (struct ipmi_act_sess_request *) payload;
             printf("  [IPMI] Authentication Type: %s(0x%02x)\n", get_ipmi_auth_type_str(request->auth_type & 0x0f), request->auth_type);
             printf("  [IPMI] Privilage: %s(0x%02x)\n", get_ipmi_priviege(request->priviege & 0x0f), request->priviege);
             printf("  [IPMI] Challege string data: ");
-            for ( int i = 0 ; i < sizeof(request->chal_str); i++ ) {
+            for (  i = 0 ; i < sizeof(request->chal_str); i++ ) {
                 printf(" 0x%02x", request->chal_str[i]);
             }
             printf("\n");

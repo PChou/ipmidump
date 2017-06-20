@@ -14,9 +14,14 @@ enum ipmi_direction {
 #define    CLOSE_SESSION  0x3C
 
 /* SDR  */
+/* storage */
 #define     GET_SDR_REPINFO        0x20
 #define     RESERVE_SDR_REP        0x22
 #define     GET_SDR                0x23
+/* s/e */
+#define     GET_SENSOR_READING     0x2d
+#define     GET_SENSOR_THRESHOLD   0x27
+
 
 
 #endif
