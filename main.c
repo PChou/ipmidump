@@ -9,6 +9,7 @@
 
 #include <pcap.h>
 
+#include "align.h"
 #include "dump.h"
 
 
@@ -17,43 +18,44 @@
 /* ethernet header */
 #define SIZE_ETHERNET       14
 struct sniff_ethernet {
-    u_char  ether_dhost[ETHER_ADDR_LEN];
-    u_char  ether_shost[ETHER_ADDR_LEN];
-    u_short ether_type;
-};
+    u_char  ether_dhost[ETHER_ADDR_LEN] TCC_PACKED;
+    u_char  ether_shost[ETHER_ADDR_LEN] TCC_PACKED;
+    u_short ether_type TCC_PACKED;
+} GNU_PACKED;
 
 
 /* loopback  header */
 #define SIZE_LOOPBACK   4
 struct sniff_loopback {
-    unsigned short  ul; /* underline protocol */
-};
+    unsigned short  ul TCC_PACKED; /* underline protocol */
+} GNU_PACKED;
 
 
 /* IP header */
 struct sniff_ip {
-    u_char  ip_vhl;     /* version and header len */
-    u_char  ip_tos;     /* type of service */
-    u_short ip_len;     /* ip packet len  */
-    u_short ip_id;     /* identification */
-    u_short ip_off;     /* fragment offset flag */
+    u_char  ip_vhl TCC_PACKED;     /* version and header len */
+    u_char  ip_tos TCC_PACKED;     /* type of service */
+    u_short ip_len TCC_PACKED;     /* ip packet len  */
+    u_short ip_id TCC_PACKED;     /* identification */
+    u_short ip_off TCC_PACKED;     /* fragment offset flag */
 #define IP_RF   0x8000
 #define IP_DF   0x4000
 #define IP_MF   0x2000
 #define IP_OFFMASK   0x1fff
-    u_char ip_ttl;      /* ttl */
-    u_char ip_p;        /* protocol  */
-    u_short ip_sum;     /* checksum of header */
-    struct in_addr  ip_src, ip_dst; /* source and dest address  */
-};
+    u_char ip_ttl TCC_PACKED;      /* ttl */
+    u_char ip_p TCC_PACKED;        /* protocol  */
+    u_short ip_sum TCC_PACKED;     /* checksum of header */
+    struct in_addr  ip_src TCC_PACKED; 
+    struct in_addr  ip_dst TCC_PACKED; /* source and dest address  */
+} GNU_PACKED;
 
 /* UDP header  */
 struct sniff_udp {
-    u_short uh_sport;       /* udp header source port  */
-    u_short uh_dport;       /* udp header destination port  */
-    u_short uh_len;         /* udp len */
-    u_short uh_checksum;    /* udp checksum */
-};
+    u_short uh_sport TCC_PACKED;       /* udp header source port  */
+    u_short uh_dport TCC_PACKED;       /* udp header destination port  */
+    u_short uh_len TCC_PACKED;         /* udp len */
+    u_short uh_checksum TCC_PACKED;    /* udp checksum */
+} GNU_PACKED;
 
 #define     IP_HL(ip)       (((ip)->ip_vhl) & 0x0f)
 #define     IP_V(ip)       (((ip)->ip_vhl) >> 4)

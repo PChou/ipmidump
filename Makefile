@@ -5,7 +5,7 @@ LIBS=`pcap-config --libs`
 
 
 $(TARGET): main.c rmcp.c ipmi.c ipmi_session.c ipmi_sdr.c
-	cc -g -o $(TARGET) $(CFLAGS) main.c rmcp.c ipmi.c ipmi_session.c ipmi_sdr.c $(LIBS)
+	$(CC) -g -o $(TARGET) $(CFLAGS) main.c rmcp.c ipmi.c ipmi_session.c ipmi_sdr.c $(LIBS)
 
 .PHONY:
 

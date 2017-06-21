@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#include "align.h"
 #include "dump.h"
 #include "ipmi_cmd.h"
 
@@ -13,24 +14,24 @@
 
 /* section 13.6 RMCP/IPMI 1.5 */
 struct ipmi_session_header {
-    u_char          ish_auth_type; /* ipmi auth type */
+    u_char          ish_auth_type TCC_PACKED; /* ipmi auth type */
 #define IPMI_AUTH_TYPE_NONE     0x00 //none
 #define IPMI_AUTH_TYPE_MD2     0x01 //md2
 #define IPMI_AUTH_TYPE_MD5     0x02 //md5
 #define IPMI_AUTH_TYPE_PWD     0x04 //straight password
 #define IPMI_AUTH_TYPE_OEM     0x05 //oem
-    unsigned int    ish_sn;        /* ipmi session sequence number */
-    unsigned int    ish_id;        /* ipmi session id */
-    u_char          ish_auth_code[IPMI_AUTH_CODE_LEN]; /* ipmi 16 bytes auth code , not present when auth type is none(0x00) */
-}__attribute__ ((packed));
+    unsigned int    ish_sn TCC_PACKED;        /* ipmi session sequence number */
+    unsigned int    ish_id TCC_PACKED;        /* ipmi session id */
+    u_char          ish_auth_code[IPMI_AUTH_CODE_LEN] TCC_PACKED; /* ipmi 16 bytes auth code , not present when auth type is none(0x00) */
+} GNU_PACKED;
 
 
 
 /* section 13.6 RMCP/IPMI 1.5 */
 struct ipmi_payload_header {
-    u_char          ipd_len;        /* ipmi payload length */
-    u_char          ipd_to_addr;    /* message send to which addr, for request message, this should be 0x20(indicate BMC); for response message, this should be 0x81(indicate the requestor) */
-    u_char          ipd_net_fn;     /* network function section 5.1 */
+    u_char          ipd_len TCC_PACKED;        /* ipmi payload length */
+    u_char          ipd_to_addr TCC_PACKED;    /* message send to which addr, for request message, this should be 0x20(indicate BMC); for response message, this should be 0x81(indicate the requestor) */
+    u_char          ipd_net_fn TCC_PACKED;     /* network function section 5.1 */
 #define NETFN_CHAS   0x00  // chassis
 #define NETFN_BRIDGE 0x02  // bridge
 #define NETFN_SEVT   0x04  // sensor/event
@@ -40,11 +41,11 @@ struct ipmi_payload_header {
 #define NETFN_TRANS  0x0c  // transport
 #define NETFN_SOL    0x34  // serial-over-lan (in IPMI 2.0, use TRANS)
 #define NETFN_PICMG  0x2c  // for ATCA PICMG systems
-    u_char          ipd_chksum1;    /* checksum */
-    u_char          ipd_from_addr;  /* from address */
-    u_char          ipd_req_seq;    /* request sequence , the requestor and responsor should match same */
-    u_char          ipd_cmd;        /* the cmd code under network function  */
-}__attribute__ ((packed));
+    u_char          ipd_chksum1 TCC_PACKED;    /* checksum */
+    u_char          ipd_from_addr TCC_PACKED;  /* from address */
+    u_char          ipd_req_seq TCC_PACKED;    /* request sequence , the requestor and responsor should match same */
+    u_char          ipd_cmd TCC_PACKED;        /* the cmd code under network function  */
+} GNU_PACKED;
 
 
 extern void print_ipmi_session(enum ipmi_direction direction,u_char cmd, const u_char *payload, int payload_len, enum dump_level dl);
@@ -162,9 +163,9 @@ void print_ipmi(const u_char *payload, int payload_len, enum dump_level dl){
     }
 
     if ( dl <= DL_IPMI_HEADER ) {
-        printf("  [IPMI] Auth Type: %s(0x%02x)\n", ipmi_get_auth_type_str(ish->ish_auth_type), ish->ish_auth_type);
-        printf("  [IPMI] Sequence: %u\n", ish->ish_sn);
-        printf("  [IPMI] Session: %u\n", ish->ish_id);
+        printf("  [IPMI] Auth Type(%lu): %s(0x%02x)\n",sizeof(ish->ish_auth_type), ipmi_get_auth_type_str(ish->ish_auth_type), ish->ish_auth_type );
+        printf("  [IPMI] Sequence(%lu): %u\n", sizeof(ish->ish_sn), ish->ish_sn);
+        printf("  [IPMI] Session(%lu): %u\n", sizeof(ish->ish_id), ish->ish_id);
         if ( ish->ish_auth_type != IPMI_AUTH_TYPE_NONE ) {
             printf("  [IPMI] Auth Code(16 bytes):");
             for (  i = 0 ; i < IPMI_AUTH_CODE_LEN; i++ ) {
@@ -182,6 +183,7 @@ void print_ipmi(const u_char *payload, int payload_len, enum dump_level dl){
     iph = (struct ipmi_payload_header *)(payload + actual_header_len);
     msg_len = (int)iph->ipd_len;
     if ( payload_len < actual_header_len + msg_len ){
+	/* fprintf(stderr, "actual header len is %d, msglen should be %d, but the payload_len is %d\n",actual_header_len ,(int)msg_len, payload_len); */
         goto small_length;
     }
 

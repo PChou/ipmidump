@@ -11,83 +11,84 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#include "align.h"
 #include "dump.h"
 #include "ipmi_cmd.h"
 
 
 /* section 22.13 */
 struct ipmi_get_auth_cap_request {
-    u_char          ch_num;
-    u_char          priviege;
-    u_char          checksum;
-}__attribute__ ((packed));
+    u_char          ch_num TCC_PACKED;
+    u_char          priviege TCC_PACKED;
+    u_char          checksum TCC_PACKED;
+} GNU_PACKED;
 
 struct ipmi_get_auth_cap_response {
-    u_char          cc;
-    u_char          ch_num;
-    u_char          auth_cap;
-    u_char          auth_method;
-    u_char          reserved;
+    u_char          cc TCC_PACKED;
+    u_char          ch_num TCC_PACKED;
+    u_char          auth_cap TCC_PACKED;
+    u_char          auth_method TCC_PACKED;
+    u_char          reserved TCC_PACKED;
     struct {
-        u_char      oem1;
-        u_char      oem2;
-        u_char      oem3;
-    } oem;
-    u_char          oem_aux;
-}__attribute__ ((packed));
+        u_char      oem1 TCC_PACKED;
+        u_char      oem2 TCC_PACKED;
+        u_char      oem3 TCC_PACKED;
+    } GNU_PACKED oem;
+    u_char          oem_aux TCC_PACKED;
+} GNU_PACKED;
 
 /* section 22.16 */
 struct ipmi_get_sess_chal_request {
-    u_char          auth_type;
-    char            name[16];
-}__attribute__ ((packed));
+    u_char          auth_type TCC_PACKED;
+    char            name[16] TCC_PACKED;
+} GNU_PACKED;
 
 /* section 22.16 */
 struct ipmi_get_sess_chal_response {
-    u_char          cc;
-    unsigned int    sid;        /* temp session id  */
-    u_char          chal_str[16];
-}__attribute__ ((packed));
+    u_char          cc TCC_PACKED;
+    unsigned int    sid TCC_PACKED;        /* temp session id  */
+    u_char          chal_str[16] TCC_PACKED;
+} GNU_PACKED;
 
 
 /* section 22.17 */
 struct ipmi_act_sess_request {
-    u_char          auth_type;
-    u_char          priviege;
-    u_char          chal_str[16];
-    unsigned int    ob_seq;     /* outbound sequence number */
-};
+    u_char          auth_type TCC_PACKED;
+    u_char          priviege TCC_PACKED;
+    u_char          chal_str[16] TCC_PACKED;
+    unsigned int    ob_seq TCC_PACKED;     /* outbound sequence number */
+} GNU_PACKED;
 
 /* section 22.17 */
 struct ipmi_act_sess_response {
-    u_char          cc;
-    u_char          auth_type;
-    unsigned int    sid;        /* reminder session id  */
-    unsigned int    ib_seq;     /* inbound sequence number */
-    u_char          priviege;
-}__attribute__ ((packed));
+    u_char          cc TCC_PACKED;
+    u_char          auth_type TCC_PACKED;
+    unsigned int    sid TCC_PACKED;        /* reminder session id  */
+    unsigned int    ib_seq TCC_PACKED;     /* inbound sequence number */
+    u_char          priviege TCC_PACKED;
+} GNU_PACKED;
 
 
 /* section 22.18 */
 struct ipmi_set_sess_priv_request {
-    u_char          priviege;
-}__attribute__ ((packed));
+    u_char          priviege TCC_PACKED;
+} GNU_PACKED;
 
 /* section 22.18 */
 struct ipmi_set_sess_priv_response {
-    u_char          cc;
-    u_char          priviege;
-}__attribute__ ((packed));
+    u_char          cc TCC_PACKED;
+    u_char          priviege TCC_PACKED;
+} GNU_PACKED;
 
 
 /* section 22.19 */
 struct ipmi_close_sess_request {
-    unsigned int    sid;
-}__attribute__ ((packed));
+    unsigned int    sid TCC_PACKED;
+} GNU_PACKED;
 
 struct ipmi_close_sess_response {
-    u_char          cc;
-}__attribute__ ((packed));
+    u_char          cc TCC_PACKED;
+} GNU_PACKED;
 
 const char* get_ipmi_priviege(u_char priviege){
     switch ( priviege ){

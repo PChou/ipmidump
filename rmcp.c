@@ -5,29 +5,30 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#include "align.h"
 #include "dump.h"
 
 /* section 13.6 */
 struct rmcp_header {
-    u_char      rmcp_v;         /* rmcp version 0x06 asf2.0*/
-    u_char      rmcp_reserved;       /* reserved */
-    u_char      rmcp_sn;        /* rmcp sequence number 0xff means ipmi*/
-    u_char      rmcp_class;     /* payload class */
+    u_char      rmcp_v TCC_PACKED;         /* rmcp version 0x06 asf2.0*/
+    u_char      rmcp_reserved TCC_PACKED;       /* reserved */
+    u_char      rmcp_sn TCC_PACKED;        /* rmcp sequence number 0xff means ipmi*/
+    u_char      rmcp_class TCC_PACKED;     /* payload class */
 #define     RMCP_CLASS_ASF      0x06
 #define     RMCP_CLASS_IPMI     0x07
-}__attribute__ ((packed));
+} GNU_PACKED;
 
 /* section 13.2 */
 struct asf_header {
-    unsigned int      asf_iana;     /* asf inan enterprise number, should be always 0x000011be */ 
+    unsigned int      asf_iana TCC_PACKED;     /* asf inan enterprise number, should be always 0x000011be */ 
 #define     ASF_IANA                    0x000011be
-    u_char            asf_mtype;    /* asf message type */
+    u_char            asf_mtype TCC_PACKED;    /* asf message type */
 #define     ASF_MESSAGE_TYPE_PING       0x80
 #define     ASF_MESSAGE_TYPE_PONG       0x40
-    u_char            asf_mtag;     /* asf message tag */
-    u_char            asf_reserved; /* asf reserved */
-    u_char            asf_dlen;     /* asf data length */
-}__attribute__ ((packed));
+    u_char            asf_mtag TCC_PACKED;     /* asf message tag */
+    u_char            asf_reserved TCC_PACKED; /* asf reserved */
+    u_char            asf_dlen TCC_PACKED;     /* asf data length */
+} GNU_PACKED;
 
 
 extern void print_ipmi(const u_char *payload, int payload_len, enum dump_level dl);
@@ -73,7 +74,7 @@ void print_rmcp(const u_char *payload, int payload_len, enum dump_level dl) {
     if ( dl <= DL_RMCP ){
         printf("  [RMCP] ASF Version: 2.0\n");
         printf("  [RMCP] SN: IPMI\n");
-        printf("  [RMCP] Class: %s(0x%02x)\n", rmcp_h->rmcp_class == RMCP_CLASS_ASF ? "ASF" : "IPMI", rmcp_h->rmcp_class);
+        printf("  [RMCP] Class(%lu): %s(0x%02x)\n", sizeof(rmcp_h->rmcp_class), rmcp_h->rmcp_class == RMCP_CLASS_ASF ? "ASF" : "IPMI", rmcp_h->rmcp_class);
     }
 
     if ( rmcp_h->rmcp_class == RMCP_CLASS_ASF ) {

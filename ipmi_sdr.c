@@ -9,8 +9,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <sys/types.h>
 
+#include "align.h"
 #include "bswap.h"
 #include "dump.h"
 #include "ipmi_cmd.h"
@@ -85,13 +87,13 @@ static const char *sensor_type_desc[] = {
 
 /* section 33.9 request data is empty*/
 struct ipmi_get_sdr_repo_response {
-    u_char              cc;
-    u_char              sdr_version;
-    unsigned short      sdr_rec_count;
-    unsigned short      sdr_rec_free;
-    unsigned int        t1;         /* addition timestamp */
-    unsigned int        t2;         /* deletion timestamp */
-    u_char              sdr_op;     /* operation support */
+    u_char              cc TCC_PACKED;
+    u_char              sdr_version TCC_PACKED;
+    unsigned short      sdr_rec_count TCC_PACKED;
+    unsigned short      sdr_rec_free TCC_PACKED;
+    unsigned int        t1 TCC_PACKED;         /* addition timestamp */
+    unsigned int        t2 TCC_PACKED;         /* deletion timestamp */
+    u_char              sdr_op TCC_PACKED;     /* operation support */
 #define     SDR_OP_SUP_ALLOC_INFO      (1 << 0)
 #define     SDR_OP_SUP_RESERVE_REPO    (1 << 1)
 #define     SDR_OP_SUP_PARTIAL_ADD     (1 << 2)
@@ -99,32 +101,32 @@ struct ipmi_get_sdr_repo_response {
 #define     SDR_OP_SUP_NON_MODAL_UP    (1 << 5)
 #define     SDR_OP_SUP_MODAL_UP        (1 << 6)
 #define     SDR_OP_SUP_OVERFLOW        (1 << 7)
-}__attribute__ ((packed));
+} GNU_PACKED;
 
 /* section 33.11 reserve repo */
 struct ipmi_reserve_sdr_repo_response {
-    u_char              cc;
-    unsigned short      sdr_res_id;
-}__attribute__ ((packed));
+    u_char              cc TCC_PACKED;
+    unsigned short      sdr_res_id TCC_PACKED;
+} GNU_PACKED;
 
 /* section 33.12 get sdr */
 struct ipmi_get_sdr_request {
-    unsigned short      sdr_res_id; /* resevation id */
-    unsigned short      sdr_rec_id; /* record id */
-    u_char              sdr_rec_offset; /* offset inside record */
-    u_char              sdr_byte_read; /* request bytes */
-}__attribute__ ((packed));
+    unsigned short      sdr_res_id TCC_PACKED; /* resevation id */
+    unsigned short      sdr_rec_id TCC_PACKED; /* record id */
+    u_char              sdr_rec_offset TCC_PACKED; /* offset inside record */
+    u_char              sdr_byte_read TCC_PACKED; /* request bytes */
+} GNU_PACKED;
 
 
 /* section 33.12 */
 struct ipmi_get_sdr_response {
-    u_char              cc;
-    unsigned short      sdr_next_rec_id;
+    u_char              cc TCC_PACKED;
+    unsigned short      sdr_next_rec_id TCC_PACKED;
     /* section 43 */
     struct {
-        unsigned short      sdr_rec_id;
-        u_char              sdr_version;
-        u_char              sdr_rec_type;
+        unsigned short      sdr_rec_id TCC_PACKED;
+        u_char              sdr_version TCC_PACKED;
+        u_char              sdr_rec_type TCC_PACKED;
 #define SDR_RECORD_TYPE_FULL_SENSOR     0x01
 #define SDR_RECORD_TYPE_COMPACT_SENSOR      0x02
 #define SDR_RECORD_TYPE_EVENTONLY_SENSOR    0x03
@@ -136,48 +138,51 @@ struct ipmi_get_sdr_response {
 #define SDR_RECORD_TYPE_MC_CONFIRMATION     0x13
 #define SDR_RECORD_TYPE_BMC_MSG_CHANNEL_INFO    0x14
 #define SDR_RECORD_TYPE_OEM         0xc0
-        u_char              sdr_rec_len;
-    }__attribute__((packed)) sdr_rec_header;
-}__attribute__ ((packed));
+        u_char              sdr_rec_len TCC_PACKED;
+    } GNU_PACKED sdr_rec_header;
+} GNU_PACKED;
 
 
 /* section 35.14 */
 struct __ipmi_get_sensor_reading_request {
-    u_char              s_num; /* sensor number */
-}__attribute__ ((packed));
+    u_char              s_num TCC_PACKED; /* sensor number */
+} GNU_PACKED;
 
 struct __ipmi_get_sensor_reading_response {
-    u_char              cc;
-    u_char              value;
-    u_char              extra[3]; /* most to 3 bytes */
-}__attribute__ ((packed));
+    u_char              cc TCC_PACKED;
+    u_char              value TCC_PACKED;
+    u_char		avail TCC_PACKED;
+#define	IS_READING_UNAVAILABLE(val)	((val) & 0x20)
+    u_char              extra[2] TCC_PACKED; /* most to 3 bytes */
+} GNU_PACKED;
 
 /* section 35.9 */
 struct __ipmi_get_sensor_threshold_request {
-    u_char              s_num;
-}__attribute__ ((packed));
+    u_char              s_num TCC_PACKED;
+} GNU_PACKED;
 
 struct __ipmi_get_sensor_threshold_response {
-    u_char              cc;
-    u_char              mask;
-    u_char              l_nc;
-    u_char              l_c;
-    u_char              l_nr;
-    u_char              u_nc;
-    u_char              u_c;
-    u_char              u_nr;
-}__attribute__ ((packed));
+    u_char              cc TCC_PACKED;
+    u_char              mask TCC_PACKED;
+    u_char              l_nc TCC_PACKED;
+    u_char              l_c TCC_PACKED;
+    u_char              l_nr TCC_PACKED;
+    u_char              u_nc TCC_PACKED;
+    u_char              u_c TCC_PACKED;
+    u_char              u_nr TCC_PACKED;
+} GNU_PACKED;
 
 /* chain to store all records */
 struct __ipmi_record_complete {
-    unsigned short      sdr_rec_id;
-    u_char              sdr_rec_type;
-    u_char              sdr_rec_len; 
-    u_char              offseting; /* current pending offset */
-    u_char              reading; /* current reading len */
-    u_char              raw[255];
-    struct __ipmi_record_complete  *next;
-}__attribute__ ((packed));
+    unsigned short      sdr_rec_id TCC_PACKED;
+    u_char              sdr_sensor_num TCC_PACKED;
+    u_char              sdr_rec_type TCC_PACKED;
+    u_char              sdr_rec_len TCC_PACKED; 
+    u_char              offseting TCC_PACKED; /* current pending offset */
+    u_char              reading TCC_PACKED; /* current reading len */
+    u_char              raw[255] TCC_PACKED;
+    struct __ipmi_record_complete  *next TCC_PACKED;
+} GNU_PACKED;
 static struct __ipmi_record_complete  *head;
 static struct __ipmi_record_complete   *last;
 static struct __ipmi_record_complete* seek_record(unsigned short sdr_rec_id) {
@@ -185,6 +190,15 @@ static struct __ipmi_record_complete* seek_record(unsigned short sdr_rec_id) {
     p = head;
     while ( p ){
         if ( p->sdr_rec_id == sdr_rec_id ) break;
+        p = p->next;
+    }
+    return p;
+}
+static struct __ipmi_record_complete* seek_sensor(u_char num) {
+    struct __ipmi_record_complete *p;
+    p = head;
+    while ( p ){
+        if ( p->sdr_sensor_num == num ) break;
         p = p->next;
     }
     return p;
@@ -233,13 +247,7 @@ static void clear_all_record(){
     head = NULL;
 }
 
-
-
-
-void print_ipmi_sdr_op_support(u_char op_support){
-    if ( op_support & SDR_OP_SUP_ALLOC_INFO ) {
-        printf("AllocInfo ");
-    }
+void print_ipmi_sdr_op_support(u_char op_support){ if ( op_support & SDR_OP_SUP_ALLOC_INFO ) { printf("AllocInfo "); }
     if ( op_support & SDR_OP_SUP_RESERVE_REPO ) {
         printf("ReserveRepo ");
     }
@@ -288,8 +296,22 @@ const char* get_ipmi_sdr_rec_type_str(u_char sdr_rec_type) {
         default:
             return "unknown";
     }
-    
-    
+}
+
+/* section 42.1  */
+const char* get_ipmi_sdr_sensor_reading_type(u_char rtype) {
+   if ( rtype == 0x00 )
+	return "unspecified";
+   else if ( rtype == 0x01 )
+	return "Threshold";
+   else if ( rtype >= 0x02 && rtype <= 0x0c )
+	return "Generic";
+   else if ( rtype >= 0x70 && rtype <= 0x7f )
+	return "OEM";
+   else if ( rtype == 0x6f )
+	return "Sensor-specific";
+   else
+  	return "out of range";
 }
 
 static void print_id_string(u_char len, char *id_string){
@@ -303,6 +325,46 @@ static void print_id_string(u_char len, char *id_string){
     tmp[id_length]='\0';
     printf("  [IPMI] Id String: %s\n", tmp);
 }
+
+static double convert_sensor_reading(struct __ipmi_record_complete *record, u_char val){
+    if ( record == NULL ){
+	    return 0;
+    }
+
+    if ( record->sdr_rec_type != SDR_RECORD_TYPE_FULL_SENSOR ){
+	    return 0;
+    }
+
+
+    struct ipmi_sdr_type_full_sensor *fs = (struct ipmi_sdr_type_full_sensor *)&(record->raw[5]);
+    int m,b,k1,k2,si;
+    double result;
+    m = __TO_M(fs->mtol);
+    b = __TO_M(fs->bacc);
+    k1 = __TO_B_EXP(fs->bacc);
+    k2 = __TO_R_EXP(fs->bacc);
+    si = ((fs->common.unit & 0xc0) >> 6);
+    //fprintf(stderr, "m:%d,b:%d,k1:%d,k2:%d,si:%d\n",m,b,k1,k2,si);
+
+    switch(si) {
+        case 0: /* unsigned */
+            result = (double) (((m*val)+b*pow(10,k1)) * pow(10,k2));
+            break;
+        case 1: /* signed 1's complement */
+            if ( val & 0x80 ){
+                val++;
+            }
+        case 2: /* signed 2's complement */
+            result = (double) (((m*(char)val)+b*pow(10,k1)) * pow(10,k2));
+            break;
+        default:
+            return 0.0;
+    }
+
+    /* TODO applying linearization, see ipmitool/lib/ipmi_sdr.c ln:218 */
+    return result;
+
+} 
 
 
 static void print_ipmi_record_complete(struct __ipmi_record_complete *record){
@@ -356,10 +418,16 @@ static void print_ipmi_record_complete(struct __ipmi_record_complete *record){
     else if ( record->sdr_rec_type == SDR_RECORD_TYPE_FULL_SENSOR || record->sdr_rec_type == SDR_RECORD_TYPE_COMPACT_SENSOR ){
         struct ipmi_sdr_sensor_common *s = (struct ipmi_sdr_sensor_common *)rbody;
         printf("  [IPMI] Sensor Number: 0x%02x\n", s->number);
+        record->sdr_sensor_num = s->number;	
         printf("  [IPMI] Sensor Entity Id: 0x%02x\n", s->e_id);
         printf("  [IPMI] Sensor Entity Instance: 0x%02x\n", s->e_ins);
-        printf("  [IPMI] Sensor Type: %s(0x%02x)\n",sensor_type_desc[s->type]  ,s->type);
-        printf("  [IPMI] Sensor Reading Type: 0x%02x\n",s->evn_type);
+        if ( s->type > 0x2c ) {
+            printf("  [IPMI] Sensor Type: reserved or oem defined(>=0xc0)(0x%02x)\n",s->type);
+        }
+        else {
+            printf("  [IPMI] Sensor Type: %s(0x%02x)\n",sensor_type_desc[s->type]  ,s->type);
+        }
+        printf("  [IPMI] Sensor Reading Type: %s(0x%02x)\n", get_ipmi_sdr_sensor_reading_type(s->evn_type) ,s->evn_type);
         printf("  [IPMI] Sensor Unit: 0x%02x\n",s->unit);
         printf("  [IPMI] Sensor Unit Base: %s(0x%02x)\n", unit_desc[s->unit_base] ,s->unit_base);
         printf("  [IPMI] Sensor Unit Modifier: 0x%02x\n", s->unit_mod);
@@ -374,12 +442,13 @@ static void print_ipmi_record_complete(struct __ipmi_record_complete *record){
             //u_char df = ((s->common.unit & 0xc0) >> 6);
             print_id_string(fs->id_code, fs->id_string);
         }
-        else {
-            printf("  [IPMI] TODO: unpack rec type (0x%02x).", record->sdr_rec_type);
+        else {/* compact sensor */
+            struct ipmi_sdr_type_compact_sensor *cs = (struct ipmi_sdr_type_compact_sensor *)rbody;
+            print_id_string(cs->id_code, cs->id_string);
         }
     }
     else {
-        fprintf(stderr, "  [IPMI] UnSupport SDR Type(0x%02x).", record->sdr_rec_type);
+        printf("  [IPMI] UnSupport SDR Type(0x%02x).\n", record->sdr_rec_type);
     }
 
 
@@ -433,6 +502,10 @@ void print_ipmi_sdr(enum ipmi_direction direction,u_char cmd, const u_char *payl
                 last->offseting = request->sdr_rec_offset;
                 last->reading = request->sdr_byte_read;
             }
+	    else if ( last != NULL ) {
+                last->offseting = request->sdr_rec_offset;
+                last->reading = request->sdr_byte_read;
+	    }
         }
         else {
             struct ipmi_get_sdr_response *response = (struct ipmi_get_sdr_response *) payload;
@@ -453,7 +526,7 @@ void print_ipmi_sdr(enum ipmi_direction direction,u_char cmd, const u_char *payl
                     last->sdr_rec_type = response->sdr_rec_header.sdr_rec_type;
                     last->sdr_rec_len = response->sdr_rec_header.sdr_rec_len;
                 }
-                memcpy(&(last->raw[last->offseting]), payload + 3 /* skip cc aand next_rec_id */, last->reading );
+                memcpy(&(last->raw[last->offseting]), payload + 3 /* skip cc and next_rec_id */, last->reading );
                 if ( last->offseting + last->reading == last->sdr_rec_len+5 ){
                     /* reading complete parse and display */
                     print_ipmi_record_complete(last);
@@ -469,15 +542,42 @@ void print_ipmi_sdr(enum ipmi_direction direction,u_char cmd, const u_char *payl
         }
     }
     else if( cmd == GET_SENSOR_READING ){
+	    static u_char pending_sensor_num = 0;
         if ( direction == IPMI_REQUEST ){
             struct __ipmi_get_sensor_reading_request *request = (struct __ipmi_get_sensor_reading_request *) payload;
+	    pending_sensor_num = request->s_num;
             printf("  [IPMI] Sensor Number: 0x%02x\n", request->s_num);
         }
         else {
             struct __ipmi_get_sensor_reading_response *response = (struct __ipmi_get_sensor_reading_response *) payload;
             printf("  [IPMI] Completion Code: 0x%02x\n", response->cc);
-            /* TODO: calculate value using the format */
-            printf("  [IPMI] Readed Value: 0x%02x\n", response->value);
+            struct __ipmi_record_complete  *record = seek_sensor(pending_sensor_num);
+	    if ( record != NULL ) {
+		if ( IS_READING_UNAVAILABLE(response->avail) ) {
+			printf("  [IPMI] Readed Value is unavaliable\n");
+		}
+		else {
+			struct ipmi_sdr_sensor_common *cmn = (struct ipmi_sdr_sensor_common *)&(record->raw[5]);
+		  if ( cmn->evn_type == 0x01 ) {
+			/* threshold type */ 
+			if ( (cmn->unit & 0xc0) != 0xc0 ) {
+				/* has analog value */
+				double c = convert_sensor_reading(record, response->value);
+				printf("  [IPMI] Readed Value: %.2f(0x%02x)\n",c ,response->value);
+			}	
+			else {
+				printf("  [IPMI] Readed Value(No analog): (0x%02x)\n",response->value);
+			}
+		  }
+		  else {
+				printf("  [IPMI] Readed Value(discrete or No analog): (0x%02x)\n",response->value);
+ 			
+		  }
+		}
+	    }
+	    else {
+		    printf("  [IPMI] Readed Value(unconverted): 0x%02x\n", response->value);
+	    }
 
         }
     }
